@@ -1,0 +1,34 @@
+{
+  "name": "rabbitmq-event-driven-exam",
+  "version": "1.0.0",
+  "description": "Event-Driven Architecture with RabbitMQ - Test 2",
+  "main": "index.js",
+  "scripts": {
+    "start": "concurrently \"npm run service1\" \"npm run service2\"",
+    "service1": "node services/service1.js",
+    "service2": "node services/service2.js",
+    "docker:up": "docker-compose up -d",
+    "docker:down": "docker-compose down",
+    "docker:logs": "docker-compose logs -f",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "rabbitmq",
+    "event-driven",
+    "architecture",
+    "nodejs",
+    "messaging"
+  ],
+  "author": "Sviatozar Mazur",
+  "license": "MIT",
+  "dependencies": {
+    "amqplib": "^0.10.3",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2",
+    "nodemon": "^3.0.1"
+  }
+}

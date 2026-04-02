@@ -1,0 +1,19 @@
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy application files
+COPY services/service2.js ./services/
+COPY src/web2/index.html ./public/web2.html
+
+# Expose port
+EXPOSE 3002
+
+# Start service
+CMD ["npm", "run", "service2"]

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Service 1 - RabbitMQ</title>
+</head>
+<body>
+    <h1>Web Service 1</h1>
+    <p>RabbitMQ Event-Driven Architecture</p>
+    
+    <div id="status">Статус: Не підключено</div>
+    
+    <div>
+        <label for="routingKey">Routing Key:</label><br>
+        <input type="text" id="routingKey" value="user.created">
+    </div>
+    
+    <div>
+        <label for="message">Повідомлення:</label><br>
+        <textarea id="message" rows="4" cols="50"></textarea>
+    </div>
+    
+    <button onclick="sendMessage()">Відправити</button>
+    
+    <h2>Історія повідомлень</h2>
+    <div id="messageList">
+        <p>Повідомлення з'являтимуться тут</p>
+    </div>
+    
+    <script>
+        const API_BASE = 'http://localhost:3001';
+        
+        function initConnection() {
+            fetch(`${API_BASE}/connect`, { method: 'POST' })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Connected:', data);
+                    updateStatus(true);
+                    startListening();
+                })
+                .catch(error => {
+                    console.error('Connection error:', error);
+                    updateStatus(false);
+                    setTimeout(initConnection, 3000);
+                });
+        }
+        
+        function updateStatus(connected) {
+            const statusEl = document.getElementById('status');
+            if (connected) {
+                statusEl.textContent = 'Статус: Підключено';
+            } else {
+                statusEl.textContent = 'Статус: Не підключено';
+            }
+        }
+        
+        function sendMessage() {
+            const routingKey = document.getElementById('routingKey').value.trim();
+            const message = document.getElementById('message').value.trim();
+            
+            if (!routingKey || !message) {
+                alert('Заповніть усі поля');
+                return;
+            }
+            
+            fetch(`${API_BASE}/send`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ routingKey, message, timestamp: new Date().toISOString() })
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Message sent:', data);
+                addMessageToUI(message, 'sent');
+                document.getElementById('message').value = '';
+            })
+            .catch(error => console.error('Send error:', error));
+        }
+        
+        function startListening() {
+            const eventSource = new EventSource(`${API_BASE}/listen`);
+            
+            eventSource.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                console.log('Message received:', data);
+                addMessageToUI(data.message, 'received');
+            };
+            
+            eventSource.onerror = function() {
+                console.error('Listening error');
+                eventSource.close();
+                updateStatus(false);
+                setTimeout(initConnection, 3000);
+            };
+        }
+        
+        function addMessageToUI(message, type) {
+            const messageList = document.getElementById('messageList');
+            
+            if (messageList.querySelector('p')) {
+                messageList.innerHTML = '';
+            }
+            
+            const msgEl = document.createElement('div');
+            const time = new Date().toLocaleTimeString('uk-UA');
+            msgEl.innerHTML = `<strong>[${time}] (${type}):</strong> ${message}`;
+            messageList.appendChild(msgEl);
+            messageList.scrollTop = messageList.scrollHeight;
+        }
+        
+        window.addEventListener('load', initConnection);
+    </script>
+</body>
+</html>
